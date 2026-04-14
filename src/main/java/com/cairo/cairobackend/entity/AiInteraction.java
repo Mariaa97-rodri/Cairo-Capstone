@@ -1,10 +1,8 @@
 package com.cairo.cairobackend.entity;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,8 +12,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class AiInteraction {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,14 +35,21 @@ public class AiInteraction {
     private AiFeature feature;
 
     @NotBlank
-    @Column(name = "prompt_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "prompt_text", nullable = false,
+            columnDefinition = "TEXT")
     private String promptText;
 
     @NotBlank
-    @Column(name = "response_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "response_text", nullable = false,
+            columnDefinition = "TEXT")
     private String responseText;
 
+    // This is the field the builder needs for .tokensUsed()
     @Column(name = "tokens_used", nullable = false)
+    @Builder.Default
+    private Integer tokensUsed = 0;
+
+    @Column(name = "was_accepted", nullable = false)
     @Builder.Default
     private Boolean wasAccepted = false;
 
@@ -56,6 +61,10 @@ public class AiInteraction {
         this.createdAt = LocalDateTime.now();
     }
 
-    public enum AiFeature {DESCRIBE_ISSUE, SUGGEST_FIELDS, RECOMMEND_ASSIGNEE, SPRINT_SUMMARY}
+    public enum AiFeature {
+        DESCRIBE_ISSUE,
+        SUGGEST_FIELDS,
+        RECOMMEND_ASSIGNEE,
+        SPRINT_SUMMARY
+    }
 }
-
