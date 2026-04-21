@@ -1,0 +1,122 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Prismatic background fills the whole page */
+.burst {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Dark overlay so the card pops against the burst */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse at center, rgba(7,8,15,0.55) 0%, rgba(7,8,15,0.85) 70%);
+}
+
+/* Auth card */
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(14, 16, 32, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(95, 128, 249, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(53, 41, 208, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Logo row */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.logoIcon {
+  width: 42px; height: 42px;
+  background: rgba(25, 217, 239, 0.1);
+  border: 1px solid rgba(25, 217, 239, 0.25);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+}
+.logoText {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--c-blue), var(--c-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer divider */
+.prismLine {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-blue), var(--c-cyan), transparent);
+  opacity: 0.5;
+}
+
+/* Heading */
+.heading { text-align: center; }
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* API error banner */
+.apiError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f43f5e;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+/* Switch link */
+.switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.link {
+  color: var(--c-cyan);
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.link:hover { opacity: 0.8; text-decoration: underline; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
