@@ -47,6 +47,7 @@ application-prod.properties
 *.pem
 *.key
 
+
 ### OS ###
 .DS_Store
 Thumbs.db

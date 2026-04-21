@@ -24,7 +24,7 @@ public class Comment {
     @JoinColumn(name = "issue_id", nullable = false)
     private Issue issue;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 

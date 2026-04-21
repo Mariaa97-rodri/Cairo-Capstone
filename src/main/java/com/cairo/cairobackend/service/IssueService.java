@@ -35,28 +35,22 @@ public class IssueService {
                              Long sprintId,
                              Integer storyPoints) {
 
-        log.info("Creating issue '{}' in project {}", title, projectId);
-
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project", projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
         User reporter = userRepository.findById(reporterId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User", reporterId));
+                .orElseThrow(() -> new ResourceNotFoundException("User", reporterId));
 
         User assignee = null;
         if (assigneeId != null) {
             assignee = userRepository.findById(assigneeId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "User", assigneeId));
+                    .orElseThrow(() -> new ResourceNotFoundException("User", assigneeId));
         }
 
         Sprint sprint = null;
         if (sprintId != null) {
             sprint = sprintRepository.findById(sprintId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Sprint", sprintId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
         }
 
         Issue issue = Issue.builder()
@@ -74,20 +68,17 @@ public class IssueService {
         Issue saved = issueRepository.save(issue);
 
         // Notify assignee if someone else created and assigned the issue
-        if (assignee != null &&
-                !assignee.getId().equals(reporterId)) {
-
+        if (assignee != null && !assignee.getId().equals(reporterId)) {
             Notification notification = Notification.builder()
                     .user(assignee)
                     .issue(saved)
                     .type(Notification.NotificationType.ASSIGNED)
-                    .message(reporter.getName()
-                            + " assigned you to: " + title)
+                    .message(reporter.getName() + " assigned you to: " + title)
                     .build();
             notificationRepository.save(notification);
         }
 
-        log.info("Issue created with id {}", saved.getId());
+        log.info("Issue '{}' created in project {} by {}", title, projectId, reporter.getEmail());
         return saved;
     }
 
@@ -97,12 +88,11 @@ public class IssueService {
                               User changedBy) {
 
         Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Issue", issueId));
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
 
         String oldStatus = issue.getStatus().name();
 
-        // Write to audit trail before updating
+        // Write to audit trail
         IssueHistory historyEntry = IssueHistory.builder()
                 .issue(issue)
                 .changedBy(changedBy)
@@ -115,19 +105,18 @@ public class IssueService {
         issue.setStatus(newStatus);
 
         // Notify assignee of the status change
-        if (issue.getAssignee() != null) {
+        if (issue.getAssignee() != null &&
+                !issue.getAssignee().getId().equals(changedBy.getId())) {
             Notification notification = Notification.builder()
                     .user(issue.getAssignee())
                     .issue(issue)
                     .type(Notification.NotificationType.STATUS_CHANGED)
-                    .message("Issue '" + issue.getTitle()
-                            + "' moved to " + newStatus.name())
+                    .message("Issue '" + issue.getTitle() + "' moved to " + newStatus.name())
                     .build();
             notificationRepository.save(notification);
         }
 
-        log.info("Issue {} status changed from {} to {}",
-                issueId, oldStatus, newStatus);
+        log.info("Issue {} status changed from {} to {}", issueId, oldStatus, newStatus);
         return issueRepository.save(issue);
     }
 
@@ -143,31 +132,43 @@ public class IssueService {
                              User changedBy) {
 
         Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Issue", issueId));
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
 
-        if (title != null) issue.setTitle(title);
-        if (description != null) issue.setDescription(description);
-        if (type != null) issue.setType(type);
-        if (priority != null) issue.setPriority(priority);
-        if (storyPoints != null) issue.setStoryPoints(storyPoints);
+        if (title        != null) issue.setTitle(title);
+        if (description  != null) issue.setDescription(description);
+        if (type         != null) issue.setType(type);
+        if (priority     != null) issue.setPriority(priority);
+        if (storyPoints  != null) issue.setStoryPoints(storyPoints);
 
+        // assigneeId == 0 or empty string means "unassign"
         if (assigneeId != null) {
-            User assignee = userRepository.findById(assigneeId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "User", assigneeId));
-            issue.setAssignee(assignee);
+            if (assigneeId == 0) {
+                issue.setAssignee(null);
+            } else {
+                User assignee = userRepository.findById(assigneeId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User", assigneeId));
+                issue.setAssignee(assignee);
+
+                // Notify new assignee
+                if (!assignee.getId().equals(changedBy.getId())) {
+                    Notification notification = Notification.builder()
+                            .user(assignee)
+                            .issue(issue)
+                            .type(Notification.NotificationType.ASSIGNED)
+                            .message(changedBy.getName() + " assigned you to: " + issue.getTitle())
+                            .build();
+                    notificationRepository.save(notification);
+                }
+            }
         }
 
         if (sprintId != null) {
             Sprint sprint = sprintRepository.findById(sprintId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Sprint", sprintId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
             issue.setSprint(sprint);
         }
 
-        log.info("Issue {} updated by {}", issueId,
-                changedBy.getEmail());
+        log.info("Issue {} updated by {}", issueId, changedBy.getEmail());
         return issueRepository.save(issue);
     }
 
@@ -185,8 +186,7 @@ public class IssueService {
     @Transactional(readOnly = true)
     public Issue getIssueById(Long issueId) {
         return issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Issue", issueId));
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
     }
 
     @Transactional(readOnly = true)
@@ -194,12 +194,22 @@ public class IssueService {
         return issueRepository.findBySprintIdOrderByCreatedAtAsc(sprintId);
     }
 
+    // Any authenticated user can delete their own issues;
+    // ADMIN can delete any issue regardless of ownership.
     @Transactional
-    public void deleteIssue(Long issueId) {
+    public void deleteIssue(Long issueId, User requestingUser) {
         Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Issue", issueId));
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
+
+        boolean isAdmin    = requestingUser.getRole() == User.Role.ADMIN;
+        boolean isReporter = issue.getReporter().getId().equals(requestingUser.getId());
+
+        if (!isAdmin && !isReporter) {
+            throw new UnauthorizedException(
+                    "Only the issue reporter or an admin can delete this issue.");
+        }
+
         issueRepository.delete(issue);
-        log.info("Issue {} deleted", issueId);
+        log.info("Issue {} deleted by {}", issueId, requestingUser.getEmail());
     }
 }

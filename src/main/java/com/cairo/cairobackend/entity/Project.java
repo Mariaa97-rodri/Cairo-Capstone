@@ -32,7 +32,7 @@ public class Project {
     @NotBlank(message = "Project key is required")
     @Size(max = 10, message = "Project key cannot exceed 10 characters")
     @Pattern(regexp = "^[A-Z0-9]+$", message = "Project key must be uppercase letters and numbers onyl")
-    @Column(name = "project-key", nullable = false, unique = true, length = 10)
+    @Column(name = "project_key", nullable = false, unique = true, length = 10)
     private String projectKey;
 
     @Column(columnDefinition = "TEXT")

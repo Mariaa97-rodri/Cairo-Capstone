@@ -3,6 +3,7 @@ package com.cairo.cairobackend.controller;
 import com.cairo.cairobackend.dto.request.CreateIssueRequest;
 import com.cairo.cairobackend.dto.request.UpdateIssueRequest;
 import com.cairo.cairobackend.dto.request.UpdateStatusRequest;
+import com.cairo.cairobackend.dto.response.IssueResponse;
 import com.cairo.cairobackend.entity.Issue;
 import com.cairo.cairobackend.entity.User;
 import com.cairo.cairobackend.service.IssueService;
@@ -24,7 +25,7 @@ public class IssueController {
     private final IssueService issueService;
 
     @GetMapping("/projects/{projectId}/issues")
-    public ResponseEntity<Page<Issue>> getIssues(
+    public ResponseEntity<Page<IssueResponse>> getIssues(
             @PathVariable Long projectId,
             @RequestParam(required = false) Issue.IssueType type,
             @RequestParam(required = false) Issue.Priority priority,
@@ -33,86 +34,77 @@ public class IssueController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Page<Issue> issues = issueService.getProjectIssues(
-                projectId,
-                type,
-                priority,
-                status,
-                assigneeId,
-                PageRequest.of(page, size,
-                        Sort.by("createdAt").descending())
+        return ResponseEntity.ok(
+                issueService.getProjectIssues(
+                        projectId, type, priority, status, assigneeId,
+                        PageRequest.of(page, size, Sort.by("createdAt").descending())
+                ).map(IssueResponse::from)
         );
-        return ResponseEntity.ok(issues);
     }
 
     @GetMapping("/issues/{issueId}")
-    public ResponseEntity<Issue> getIssue(
-            @PathVariable Long issueId) {
-
-        return ResponseEntity.ok(
-                issueService.getIssueById(issueId));
+    public ResponseEntity<IssueResponse> getIssue(@PathVariable Long issueId) {
+        return ResponseEntity.ok(IssueResponse.from(issueService.getIssueById(issueId)));
     }
 
     @PostMapping("/projects/{projectId}/issues")
-    public ResponseEntity<Issue> createIssue(
+    public ResponseEntity<IssueResponse> createIssue(
             @PathVariable Long projectId,
             @Valid @RequestBody CreateIssueRequest request,
             @AuthenticationPrincipal User currentUser) {
 
-        Issue created = issueService.createIssue(
-                projectId,
-                currentUser.getId(),
-                request.getTitle(),
-                request.getDescription(),
-                request.getType(),
-                request.getPriority(),
-                request.getAssigneeId(),
-                request.getSprintId(),
-                request.getStoryPoints()
-        );
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(created);
+                .body(IssueResponse.from(
+                        issueService.createIssue(
+                                projectId,
+                                currentUser.getId(),
+                                request.getTitle(),
+                                request.getDescription(),
+                                request.getType(),
+                                request.getPriority(),
+                                request.getAssigneeId(),
+                                request.getSprintId(),
+                                request.getStoryPoints()
+                        )));
     }
 
     @PutMapping("/issues/{issueId}")
-    public ResponseEntity<Issue> updateIssue(
+    public ResponseEntity<IssueResponse> updateIssue(
             @PathVariable Long issueId,
             @Valid @RequestBody UpdateIssueRequest request,
             @AuthenticationPrincipal User currentUser) {
 
-        Issue updated = issueService.updateIssue(
-                issueId,
-                request.getTitle(),
-                request.getDescription(),
-                request.getType(),
-                request.getPriority(),
-                request.getAssigneeId(),
-                request.getSprintId(),
-                request.getStoryPoints(),
-                currentUser
-        );
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(IssueResponse.from(
+                issueService.updateIssue(
+                        issueId,
+                        request.getTitle(),
+                        request.getDescription(),
+                        request.getType(),
+                        request.getPriority(),
+                        request.getAssigneeId(),
+                        request.getSprintId(),
+                        request.getStoryPoints(),
+                        currentUser
+                )));
     }
 
     @PatchMapping("/issues/{issueId}/status")
-    public ResponseEntity<Issue> updateStatus(
+    public ResponseEntity<IssueResponse> updateStatus(
             @PathVariable Long issueId,
             @Valid @RequestBody UpdateStatusRequest request,
             @AuthenticationPrincipal User currentUser) {
 
-        Issue updated = issueService.updateStatus(
-                issueId,
-                request.getStatus(),
-                currentUser
-        );
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(IssueResponse.from(
+                issueService.updateStatus(issueId, request.getStatus(), currentUser)));
     }
 
+    // Now passes currentUser so ADMIN check works in service
     @DeleteMapping("/issues/{issueId}")
     public ResponseEntity<Void> deleteIssue(
-            @PathVariable Long issueId) {
+            @PathVariable Long issueId,
+            @AuthenticationPrincipal User currentUser) {
 
-        issueService.deleteIssue(issueId);
+        issueService.deleteIssue(issueId, currentUser);
         return ResponseEntity.noContent().build();
     }
 }

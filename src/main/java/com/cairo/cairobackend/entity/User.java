@@ -1,5 +1,6 @@
 package com.cairo.cairobackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
+    @JsonIgnore
     @NotBlank(message = "Password is required")
     @Column(nullable = false)
     private String password;

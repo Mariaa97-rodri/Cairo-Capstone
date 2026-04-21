@@ -3,6 +3,7 @@ package com.cairo.cairobackend.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -75,6 +76,13 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation failed: {}", fieldErrors);
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(
+            BadCredentialsException ex) {
+        log.warn("Bad credentials attempt: {}", ex.getMessage());
+        return buildError(HttpStatus.UNAUTHORIZED, "Invalid email or password.");
     }
 
     @ExceptionHandler(Exception.class)

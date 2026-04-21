@@ -35,15 +35,4 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
             @Param("assigneeId") Long assigneeId,
             Pageable pageable
     );
-
-    // Used by AI smart assignee — count open issues per user in a project
-    @Query("""
-        SELECT i.assignee.id, COUNT(i)
-        FROM Issue i
-        WHERE i.project.id = :projectId
-        AND i.assignee IS NOT NULL
-        AND i.status != 'DONE'
-        GROUP BY i.assignee.id
-        """)
-    List<Object[]> countOpenIssuesByAssigneeInProject(@Param("projectId") Long projectId);
 }

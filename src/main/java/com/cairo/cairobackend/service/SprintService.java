@@ -2,6 +2,7 @@ package com.cairo.cairobackend.service;
 
 import com.cairo.cairobackend.entity.Issue;
 import com.cairo.cairobackend.entity.Sprint;
+import com.cairo.cairobackend.entity.User;
 import com.cairo.cairobackend.exception.BusinessException;
 import com.cairo.cairobackend.exception.ResourceNotFoundException;
 import com.cairo.cairobackend.repository.IssueRepository;
@@ -27,14 +28,11 @@ public class SprintService {
     private final ProjectRepository projectRepository;
 
     @Transactional
-    public Sprint createSprint(Long projectId,
-                               String name,
-                               LocalDate startDate,
-                               LocalDate endDate) {
+    public Sprint createSprint(Long projectId, String name,
+                               LocalDate startDate, LocalDate endDate) {
 
         projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project", projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
         Sprint sprint = Sprint.builder()
                 .project(projectRepository.getReferenceById(projectId))
@@ -53,15 +51,12 @@ public class SprintService {
     public Sprint startSprint(Long sprintId) {
 
         Sprint sprint = sprintRepository.findById(sprintId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Sprint", sprintId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
 
         if (sprint.getStatus() != Sprint.SprintStatus.PENDING) {
-            throw new BusinessException(
-                    "Only a PENDING sprint can be started.");
+            throw new BusinessException("Only a PENDING sprint can be started.");
         }
 
-        // Business rule: only one sprint can be ACTIVE per project
         boolean anotherActive = sprintRepository
                 .existsByProjectIdAndStatus(
                         sprint.getProject().getId(),
@@ -69,8 +64,7 @@ public class SprintService {
 
         if (anotherActive) {
             throw new BusinessException(
-                    "Cannot start sprint — another sprint is already " +
-                            "active in this project. Complete it first.");
+                    "Cannot start sprint — another sprint is already active. Complete it first.");
         }
 
         sprint.setStatus(Sprint.SprintStatus.ACTIVE);
@@ -82,12 +76,10 @@ public class SprintService {
     public Sprint completeSprint(Long sprintId) {
 
         Sprint sprint = sprintRepository.findById(sprintId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Sprint", sprintId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
 
         if (sprint.getStatus() != Sprint.SprintStatus.ACTIVE) {
-            throw new BusinessException(
-                    "Only an ACTIVE sprint can be completed.");
+            throw new BusinessException("Only an ACTIVE sprint can be completed.");
         }
 
         // Move all unfinished issues back to backlog
@@ -99,9 +91,7 @@ public class SprintService {
         issueRepository.saveAll(unfinished);
 
         sprint.setStatus(Sprint.SprintStatus.COMPLETED);
-
-        log.info("Sprint {} completed. {} issues moved to backlog.",
-                sprintId, unfinished.size());
+        log.info("Sprint {} completed. {} issues moved to backlog.", sprintId, unfinished.size());
         return sprintRepository.save(sprint);
     }
 
@@ -109,16 +99,13 @@ public class SprintService {
     public void addIssueToSprint(Long sprintId, Long issueId) {
 
         Sprint sprint = sprintRepository.findById(sprintId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Sprint", sprintId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
 
         Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Issue", issueId));
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
 
         if (issue.getSprint() != null) {
-            throw new BusinessException(
-                    "Issue is already assigned to a sprint.");
+            throw new BusinessException("Issue is already assigned to a sprint.");
         }
 
         issue.setSprint(sprint);
@@ -126,27 +113,33 @@ public class SprintService {
         log.info("Issue {} added to sprint {}", issueId, sprintId);
     }
 
-    // Returns issues grouped by status for the Kanban board
+    // Returns issues grouped by status for the Kanban board.
+    // Requires an active sprint — throws 400 if none exists.
     @Transactional(readOnly = true)
-    public Map<Issue.IssueStatus, List<Issue>> getBoardData(
-            Long projectId) {
+    public Map<Issue.IssueStatus, List<Issue>> getBoardData(Long projectId) {
 
         Sprint activeSprint = sprintRepository
-                .findByProjectIdAndStatus(
-                        projectId, Sprint.SprintStatus.ACTIVE)
+                .findByProjectIdAndStatus(projectId, Sprint.SprintStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(
-                        "No active sprint found for this project."));
+                        "No active sprint found. Start a sprint first to use the board."));
 
         List<Issue> issues = issueRepository
                 .findBySprintIdOrderByCreatedAtAsc(activeSprint.getId());
 
-        return issues.stream()
+        // Group by all 4 statuses, ensuring empty lists for statuses with no issues
+        Map<Issue.IssueStatus, List<Issue>> board = issues.stream()
                 .collect(Collectors.groupingBy(Issue::getStatus));
+
+        // Fill in empty columns so the frontend always gets all 4
+        for (Issue.IssueStatus status : Issue.IssueStatus.values()) {
+            board.putIfAbsent(status, List.of());
+        }
+
+        return board;
     }
 
     @Transactional(readOnly = true)
     public List<Sprint> getSprintsForProject(Long projectId) {
-        return sprintRepository
-                .findByProjectIdOrderByCreatedAtDesc(projectId);
+        return sprintRepository.findByProjectIdOrderByCreatedAtDesc(projectId);
     }
 }
