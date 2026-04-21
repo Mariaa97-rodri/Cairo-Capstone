@@ -1,0 +1,102 @@
+.breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+.back { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-family: var(--font-display); cursor: pointer; transition: color 0.15s; }
+.back:hover { color: var(--c-cyan); }
+.breadSep { color: var(--text-muted); }
+.breadCurrent {}
+
+.layout { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
+
+/* Main */
+.main { display: flex; flex-direction: column; gap: 20px; }
+
+.titleSection { display: flex; flex-direction: column; gap: 10px; }
+.badgeRow { display: flex; gap: 8px; align-items: center; }
+.title { font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.3; }
+
+.descCard, .commentsSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; }
+
+/* Comments */
+.commentCount { background: var(--bg-hover); border-radius: 999px; padding: 1px 7px; font-family: var(--font-mono); }
+.noComments { font-size: 13px; color: var(--text-muted); padding: 12px 0; }
+.commentList { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+.comment { display: flex; gap: 12px; }
+.commentAvatar {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--c-indigo), var(--c-blue));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.commentBody { flex: 1; min-width: 0; }
+.commentHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.commentAuthor { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.deleteComment { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; border-radius: 4px; display: flex; transition: color 0.15s; }
+.deleteComment:hover { color: #f43f5e; }
+.commentText { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+
+.commentForm { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+.commentInput {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px; font-family: var(--font-display);
+  padding: 10px 14px;
+  resize: vertical;
+  transition: border-color 0.18s;
+  line-height: 1.6;
+}
+.commentInput::placeholder { color: var(--text-muted); }
+.commentInput:focus { outline: none; border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(95,128,249,0.12); }
+.commentErr { font-size: 12px; color: #f43f5e; }
+
+/* Sidebar */
+.sidebar { display: flex; flex-direction: column; gap: 14px; }
+.sideCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.sideLabel { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+.statusSelect {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px; font-family: var(--font-display);
+  padding: 9px 12px;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.18s;
+}
+.statusSelect:focus { outline: none; border-color: var(--c-cyan); }
+.statusSelect option { background: var(--bg-card); }
+
+.detailRows { display: flex; flex-direction: column; gap: 10px; }
+.detailRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.detailKey { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+.detailVal { font-size: 13px; color: var(--text-primary); text-align: right; }
+.projectLink { background: none; border: none; color: var(--c-blue); font-size: 13px; cursor: pointer; font-family: var(--font-display); transition: color 0.15s; }
+.projectLink:hover { color: var(--c-cyan); text-decoration: underline; }
+
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { order: -1; } }
