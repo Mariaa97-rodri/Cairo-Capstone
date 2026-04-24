@@ -1,5 +1,6 @@
 package com.cairo.cairobackend.service;
 
+import com.cairo.cairobackend.dto.response.IssueHistoryResponse;
 import com.cairo.cairobackend.entity.*;
 import com.cairo.cairobackend.exception.*;
 import com.cairo.cairobackend.repository.*;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -162,10 +164,17 @@ public class IssueService {
             }
         }
 
+        // Handle sprint — explicitly check if sprintId key was provided
+// sprintId = 0 means "remove from sprint" (move to backlog)
+// sprintId = X means "assign to sprint X"
         if (sprintId != null) {
-            Sprint sprint = sprintRepository.findById(sprintId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
-            issue.setSprint(sprint);
+            if (sprintId == 0) {
+                issue.setSprint(null); // move to backlog
+            } else {
+                Sprint sprint = sprintRepository.findById(sprintId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Sprint", sprintId));
+                issue.setSprint(sprint);
+            }
         }
 
         log.info("Issue {} updated by {}", issueId, changedBy.getEmail());
@@ -187,6 +196,16 @@ public class IssueService {
     public Issue getIssueById(Long issueId) {
         return issueRepository.findById(issueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<IssueHistoryResponse> getIssueHistory(Long issueId) {
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new ResourceNotFoundException("Issue", issueId));
+return issue.getHistory().stream()
+        .sorted((a, b) -> b.getChangedAt().compareTo(a.getChangedAt()))
+        .map(IssueHistoryResponse::from)
+        .collect(java.util.stream.Collectors.toList());
     }
 
     @Transactional(readOnly = true)

@@ -3,6 +3,7 @@ package com.cairo.cairobackend.controller;
 import com.cairo.cairobackend.dto.request.CreateIssueRequest;
 import com.cairo.cairobackend.dto.request.UpdateIssueRequest;
 import com.cairo.cairobackend.dto.request.UpdateStatusRequest;
+import com.cairo.cairobackend.dto.response.IssueHistoryResponse;
 import com.cairo.cairobackend.dto.response.IssueResponse;
 import com.cairo.cairobackend.entity.Issue;
 import com.cairo.cairobackend.entity.User;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -45,6 +48,12 @@ public class IssueController {
     @GetMapping("/issues/{issueId}")
     public ResponseEntity<IssueResponse> getIssue(@PathVariable Long issueId) {
         return ResponseEntity.ok(IssueResponse.from(issueService.getIssueById(issueId)));
+    }
+
+    @GetMapping("/issues/{issueId}/history")
+    public ResponseEntity<List<IssueHistoryResponse>> getHistory(
+            @PathVariable Long issueId) {
+        return ResponseEntity.ok(issueService.getIssueHistory(issueId));
     }
 
     @PostMapping("/projects/{projectId}/issues")

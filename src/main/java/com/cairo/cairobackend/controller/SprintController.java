@@ -25,11 +25,9 @@ public class SprintController {
     @GetMapping("/projects/{projectId}/sprints")
     public ResponseEntity<List<SprintResponse>> getSprints(
             @PathVariable Long projectId) {
-
         return ResponseEntity.ok(
                 sprintService.getSprintsForProject(projectId)
-                        .stream()
-                        .map(SprintResponse::from)
+                        .stream().map(SprintResponse::from)
                         .collect(Collectors.toList()));
     }
 
@@ -37,50 +35,45 @@ public class SprintController {
     public ResponseEntity<SprintResponse> createSprint(
             @PathVariable Long projectId,
             @Valid @RequestBody CreateSprintRequest request) {
-
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SprintResponse.from(
-                        sprintService.createSprint(
-                                projectId,
-                                request.getName(),
-                                request.getStartDate(),
-                                request.getEndDate())));
+                        sprintService.createSprint(projectId, request.getName(),
+                                request.getStartDate(), request.getEndDate())));
+    }
+
+    // Edit a PENDING sprint — name and dates only
+    @PutMapping("/sprints/{sprintId}")
+    public ResponseEntity<SprintResponse> updateSprint(
+            @PathVariable Long sprintId,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(SprintResponse.from(
+                sprintService.updateSprint(sprintId,
+                        body.get("name"),
+                        body.get("startDate"),
+                        body.get("endDate"))));
     }
 
     @PatchMapping("/sprints/{sprintId}/start")
-    public ResponseEntity<SprintResponse> startSprint(
-            @PathVariable Long sprintId) {
-
-        return ResponseEntity.ok(
-                SprintResponse.from(
-                        sprintService.startSprint(sprintId)));
+    public ResponseEntity<SprintResponse> startSprint(@PathVariable Long sprintId) {
+        return ResponseEntity.ok(SprintResponse.from(sprintService.startSprint(sprintId)));
     }
 
     @PatchMapping("/sprints/{sprintId}/complete")
-    public ResponseEntity<SprintResponse> completeSprint(
-            @PathVariable Long sprintId) {
-
-        return ResponseEntity.ok(
-                SprintResponse.from(
-                        sprintService.completeSprint(sprintId)));
+    public ResponseEntity<SprintResponse> completeSprint(@PathVariable Long sprintId) {
+        return ResponseEntity.ok(SprintResponse.from(sprintService.completeSprint(sprintId)));
     }
 
     @PostMapping("/sprints/{sprintId}/issues")
     public ResponseEntity<Map<String, String>> addIssueToSprint(
             @PathVariable Long sprintId,
             @RequestBody Map<String, Long> body) {
-
         sprintService.addIssueToSprint(sprintId, body.get("issueId"));
-        return ResponseEntity.ok(
-                Map.of("message", "Issue added to sprint"));
+        return ResponseEntity.ok(Map.of("message", "Issue added to sprint"));
     }
 
-    // Board returns issues grouped by status —
-    // we map each Issue to IssueResponse to keep the response clean.
     @GetMapping("/projects/{projectId}/board")
     public ResponseEntity<Map<Issue.IssueStatus, List<IssueResponse>>> getBoard(
             @PathVariable Long projectId) {
-
         Map<Issue.IssueStatus, List<IssueResponse>> board =
                 sprintService.getBoardData(projectId)
                         .entrySet().stream()
@@ -90,7 +83,6 @@ public class SprintController {
                                         .map(IssueResponse::from)
                                         .collect(Collectors.toList())
                         ));
-
         return ResponseEntity.ok(board);
     }
 }
