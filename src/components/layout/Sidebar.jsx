@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import styles from './Sidebar.module.css'
 
@@ -17,8 +17,12 @@ const ADMIN_NAV = [
 export default function Sidebar() {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   const handleLogout = () => { logout(); navigate('/login') }
+
+  const projectMatch = pathname.match(/^\/projects\/([^/]+)/)
+  const projectId = projectMatch?.[1]
 
   return (
     <aside className={styles.sidebar} aria-label="Main navigation">
@@ -43,6 +47,28 @@ export default function Sidebar() {
             <span>{label}</span>
           </NavLink>
         ))}
+
+        {/* Project section — visible when inside a project */}
+        {projectId && (
+          <>
+            <div className={styles.navDivider} />
+            <p className={styles.navSection}>Project</p>
+            <NavLink to={`/projects/${projectId}/board`}
+              className={({ isActive }) => [styles.navItem, isActive ? styles.active : ''].filter(Boolean).join(' ')}>
+              <span className={styles.navIcon}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+              </span>
+              <span>Sprints</span>
+            </NavLink>
+            <NavLink to={`/projects/${projectId}/backlog`}
+              className={({ isActive }) => [styles.navItem, isActive ? styles.active : ''].filter(Boolean).join(' ')}>
+              <span className={styles.navIcon}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+              </span>
+              <span>Issues</span>
+            </NavLink>
+          </>
+        )}
 
         {/* Admin section — only visible to ADMIN role */}
         {isAdmin && (

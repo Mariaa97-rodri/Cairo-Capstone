@@ -77,7 +77,7 @@
 }
 .sideLabel { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
 
-.statusSelect {
+.statusSelect, .sideSelect {
   width: 100%;
   background: var(--bg-input);
   border: 1px solid var(--border-mid);
@@ -89,8 +89,8 @@
   appearance: none;
   transition: border-color 0.18s;
 }
-.statusSelect:focus { outline: none; border-color: var(--c-cyan); }
-.statusSelect option { background: var(--bg-card); }
+.statusSelect:focus, .sideSelect:focus { outline: none; border-color: var(--c-cyan); }
+.statusSelect option, .sideSelect option { background: var(--bg-card); }
 
 .detailRows { display: flex; flex-direction: column; gap: 10px; }
 .detailRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -100,3 +100,9 @@
 .projectLink:hover { color: var(--c-cyan); text-decoration: underline; }
 
 @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { order: -1; } }
+
+
+@media (max-width: 900px) {
+  .layout  { grid-template-columns: 1fr; }
+  .sidebar { order: -1; }
+}
