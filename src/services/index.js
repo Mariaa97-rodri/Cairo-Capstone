@@ -9,14 +9,17 @@ export const projectService = {
   getAll:       (page = 0, size = 20) => api.get('/projects', { params: { page, size } }),
   getById:      (id)                  => api.get(`/projects/${id}`),
   create:       (data)                => api.post('/projects', data),
+  update:       (id, data)            => api.put(`/projects/${id}`, data),
   delete:       (id)                  => api.delete(`/projects/${id}`),
   addMember:    (projectId, userId)   => api.post(`/projects/${projectId}/members`, { userId }),
   removeMember: (projectId, userId)   => api.delete(`/projects/${projectId}/members/${userId}`),
+  getMembers:   (projectId)           => api.get(`/projects/${projectId}/members`),
 }
 
 export const sprintService = {
   getAll:    (projectId)          => api.get(`/projects/${projectId}/sprints`),
   create:    (projectId, data)    => api.post(`/projects/${projectId}/sprints`, data),
+  update:    (sprintId, data)     => api.put(`/sprints/${sprintId}`, data),
   start:     (sprintId)           => api.patch(`/sprints/${sprintId}/start`),
   complete:  (sprintId)           => api.patch(`/sprints/${sprintId}/complete`),
   addIssue:  (sprintId, issueId)  => api.post(`/sprints/${sprintId}/issues`, { issueId }),
@@ -31,6 +34,7 @@ export const issueService = {
   update:       (issueId, data)   => api.put(`/issues/${issueId}`, data),
   updateStatus: (issueId, status) => api.patch(`/issues/${issueId}/status`, { status }),
   delete:       (issueId)         => api.delete(`/issues/${issueId}`),
+  getHistory:   (issueId)         => api.get(`/issues/${issueId}/history`),
 }
 
 export const commentService = {
@@ -45,7 +49,6 @@ export const notificationService = {
   markAllRead: () => api.patch('/notifications/read-all'),
 }
 
-// Returns all users — used for member/assignee dropdowns
 export const userService = {
   getAll:     (page = 0, size = 100) => api.get('/users', { params: { page, size } }),
   getById:    (id)                   => api.get(`/users/${id}`),

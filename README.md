@@ -379,5 +379,5 @@ cd cairo-backend
 ```
 
 ---
-
+Figma: https://www.figma.com/board/MdyMyU7igWzTctPbDwX1kS/Cairo?node-id=0-1&t=lbna9LnBbQXSNGnU-1
 *Cairo — UCI 2123 Capstone Project · Maria Aguilar · 2026*

@@ -137,7 +137,20 @@
   transition: all 0.18s;
 }
 .createBtn:hover { background: #7090ff; transform: translateY(-1px); }
+.viewBtn { font-size: 12px; color: var(--c-blue); opacity: 0; transition: opacity 0.15s; }
+.projectCard:hover .viewBtn { opacity: 1; }
 
 /* Responsive */
 @media (max-width: 1024px) { .statsGrid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px)  { .statsGrid { grid-template-columns: 1fr 1fr; } .projectsGrid { grid-template-columns: 1fr; } }
+
+
+@media (max-width: 1024px) { .statsGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px)  {
+  .statsGrid     { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .projectsGrid  { grid-template-columns: 1fr; }
+  .statValue     { font-size: 28px; }
+}
+@media (max-width: 480px)  {
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+}

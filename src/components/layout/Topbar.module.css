@@ -82,3 +82,11 @@
 .notifMsg  { font-size: 13px; color: var(--text-primary); line-height: 1.4; }
 .notifType { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; font-family: var(--font-mono); }
 .empty     { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+.clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.clickable:hover {
+  background: var(--bg-hover);
+}

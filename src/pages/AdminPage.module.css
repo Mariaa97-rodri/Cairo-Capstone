@@ -86,3 +86,13 @@
   .row { grid-template-columns: 1fr 120px 100px; }
   .row > *:nth-child(2) { display: none; }
 }
+
+
+@media (max-width: 768px) {
+  .row { grid-template-columns: 1fr 100px 140px; }
+  .row > *:nth-child(2) { display: none; }
+}
+@media (max-width: 480px) {
+  .row { grid-template-columns: 1fr 100px; }
+  .row > *:nth-child(3) { display: none; }
+}

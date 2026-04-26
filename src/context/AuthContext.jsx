@@ -57,11 +57,12 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('cairo_token')
-    localStorage.removeItem('cairo_user')
-    dispatch({ type: 'LOGOUT' })
-  }, [])
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  dispatch({ type: 'LOGOUT' })
+  window.location.href = '/'
+}
 
   const value = useMemo(() => ({
     ...state,

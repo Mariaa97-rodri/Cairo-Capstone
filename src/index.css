@@ -190,3 +190,42 @@ input, textarea, select { font-family: inherit; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .text-glow-cyan  { color: var(--c-cyan);  text-shadow: 0 0 20px rgba(25,217,239,0.5); }
 .text-glow-blue  { color: var(--c-blue);  text-shadow: 0 0 20px rgba(95,128,249,0.5); }
+
+/* ─── Mobile & Tablet responsive (#4) ──────────────────────── */
+@media (max-width: 768px) {
+  .page-wrapper { flex-direction: column; }
+  .main-content { padding: 16px; max-height: none; }
+
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-title  { font-size: 20px; }
+
+  /* Hide sidebar text on mobile, show icon-only */
+  .empty-state { padding: 32px 16px; }
+}
+
+/* Ensure all native selects are visible (#7) */
+select option {
+  background: #0e1020 !important;
+  color: #eef0ff !important;
+}
+
+
+/* ─── Global mobile & tablet (#4) ───────────────────────────── */
+@media (max-width: 768px) {
+  .page-wrapper  { flex-direction: column; }
+  .main-content  { padding: 16px; max-height: none; overflow-y: visible; }
+  .page-header   { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-title    { font-size: 20px; }
+  .empty-state   { padding: 32px 16px; }
+}
+
+/* All native selects readable on all browsers */
+select option {
+  background: #1a1a2e !important;
+  color: #eef0ff !important;
+  font-weight: 500;
+}
+select option:checked {
+  background: #5f80f9 !important;
+  color: #fff !important;
+}

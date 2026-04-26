@@ -120,3 +120,9 @@
 .link:hover { opacity: 0.8; text-decoration: underline; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+
+@media (max-width: 480px) {
+  .card { padding: 24px 18px; }
+  .title { font-size: 18px; }
+}
