@@ -1,6 +1,7 @@
 package com.cairo.cairobackend.config;
 
 import com.cairo.cairobackend.security.JwtAuthFilter;
+import com.cairo.cairobackend.security.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -61,6 +63,8 @@ public class SecurityConfig {
                 // Use our custom auth provider
                 .authenticationProvider(authenticationProvider())
 
+                //Rate limiting filter
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 // Add JWT filter BEFORE Spring's default username/password filter
                 .addFilterBefore(jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class);

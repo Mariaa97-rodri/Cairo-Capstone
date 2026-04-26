@@ -72,6 +72,15 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public Page<Project> getProjectsForUser(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        // Admin sees ALL projects
+        if (user.getRole() == User.Role.ADMIN) {
+            return projectRepository.findAll(pageable);
+        }
+
+        // Regular users only see projects they are members of
         return projectRepository.findAllByMemberId(userId, pageable);
     }
 
@@ -80,15 +89,14 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
-        // ADMIN can see any project
+        // Admin can see any project
         if (requestingUser.getRole() == User.Role.ADMIN) return project;
 
-        // Otherwise must be a member
+        // Regular users must be a member
         boolean isMember = projectMemberRepository
                 .existsByProjectIdAndUserId(projectId, requestingUser.getId());
         if (!isMember) {
-            throw new UnauthorizedException(
-                    "You are not a member of this project.");
+            throw new UnauthorizedException("You are not a member of this project.");
         }
         return project;
     }
