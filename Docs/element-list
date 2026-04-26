@@ -1,0 +1,10 @@
+com.cairo.cairobackend
+com.cairo.cairobackend.config
+com.cairo.cairobackend.controller
+com.cairo.cairobackend.dto.request
+com.cairo.cairobackend.dto.response
+com.cairo.cairobackend.entity
+com.cairo.cairobackend.exception
+com.cairo.cairobackend.repository
+com.cairo.cairobackend.security
+com.cairo.cairobackend.service
