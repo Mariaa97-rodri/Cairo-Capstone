@@ -1,0 +1,1134 @@
+{
+  "info": {
+    "name": "Cairo Backend",
+    "description": "Complete API test collection for Cairo project management backend.\n\nBase URL: http://localhost:8081/api/v1\n\nHOW TO USE:\n1. Run 'Register' or 'Login' first — token is auto-saved to the 'token' variable\n2. All other requests use that token automatically\n3. IDs (projectId, sprintId, issueId, commentId) are auto-saved as you create resources\n4. Recommended order: Register → Create Project → Create Sprint → Create Issue → Start Sprint → Add Issue to Sprint → Get Board → Add Comment → Update Status → Complete Sprint",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "http://localhost:8081/api/v1" },
+    { "key": "token",      "value": "" },
+    { "key": "projectId",  "value": "1" },
+    { "key": "sprintId",   "value": "1" },
+    { "key": "issueId",    "value": "1" },
+    { "key": "commentId",  "value": "1" },
+    { "key": "userId",     "value": "2" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Register and login endpoints. These are the only public endpoints — no token required.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json.userId);",
+                  "  console.log('Token saved. UserId:', json.userId);",
+                  "}",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has token', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.test('Response has userId', () => pm.expect(pm.response.json().userId).to.be.a('number'));",
+                  "pm.test('Response has role', () => pm.expect(pm.response.json().role).to.eql('USER'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "description": "Register a new user.\n\nExpected response 201:\n{\n  \"token\": \"eyJhbGci...\",\n  \"message\": \"Account created successfully\",\n  \"userId\": 1,\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"role\": \"USER\"\n}"
+          }
+        },
+        {
+          "name": "Register - Duplicate Email (Expect 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Error message present', () => pm.expect(pm.response.json().message).to.include('already exists'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "description": "Run this AFTER Register. Should return 409 Conflict."
+          }
+        },
+        {
+          "name": "Register - Validation Errors (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Has fields object', () => pm.expect(pm.response.json()).to.have.property('fields'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}"
+            },
+            "description": "Should return 400 with field-level validation errors for name, email, and password."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json.userId);",
+                  "  console.log('Token saved. UserId:', json.userId);",
+                  "}",
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has token', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.test('Message is Login successful', () => pm.expect(pm.response.json().message).to.eql('Login successful'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "description": "Login with existing credentials.\n\nExpected response 200:\n{\n  \"token\": \"eyJhbGci...\",\n  \"message\": \"Login successful\",\n  \"userId\": 1,\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"role\": \"USER\"\n}"
+          }
+        },
+        {
+          "name": "Login - Wrong Password (Expect 401/403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 or 403', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "description": "Should be rejected with 401 or 403."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "description": "All project endpoints. Requires JWT token.",
+      "item": [
+        {
+          "name": "Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('projectId', json.id);",
+                  "  console.log('projectId saved:', json.id);",
+                  "}",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has id', () => pm.expect(pm.response.json().id).to.be.a('number'));",
+                  "pm.test('Has owner object', () => pm.expect(pm.response.json().owner).to.be.an('object'));",
+                  "pm.test('Owner has no password', () => pm.expect(pm.response.json().owner).to.not.have.property('password'));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cairo Test Project\",\n  \"projectKey\": \"CAIRO\",\n  \"description\": \"A test project for the Cairo app\"\n}"
+            },
+            "description": "Creates a project. Owner is auto-added as a member.\n\nExpected ProjectResponse:\n{\n  \"id\": 1,\n  \"name\": \"Cairo Test Project\",\n  \"projectKey\": \"CAIRO\",\n  \"description\": \"...\",\n  \"owner\": { \"id\": 1, \"name\": \"Test User\", \"email\": \"...\", \"role\": \"USER\" }\n}"
+          }
+        },
+        {
+          "name": "Get All My Projects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is paginated', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('content');",
+                  "  pm.expect(json).to.have.property('totalElements');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/projects?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            },
+            "description": "Returns paginated list of projects the current user belongs to."
+          }
+        },
+        {
+          "name": "Get Project by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));",
+                  "pm.test('Owner has no password', () => pm.expect(pm.response.json().owner).to.not.have.property('password'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Returns a single ProjectResponse by ID."
+          }
+        },
+        {
+          "name": "Get Project - Not Found (Expect 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Has error message', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/99999"
+          }
+        },
+        {
+          "name": "Add Member to Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success message', () => pm.expect(pm.response.json().message).to.eql('Member added successfully'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/members",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}}\n}"
+            },
+            "description": "Only the project owner can add members. Update userId variable to an existing user."
+          }
+        },
+        {
+          "name": "Add Member - Already Member (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/members",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}}\n}"
+            },
+            "description": "Run after Add Member. Should return 400 BusinessException."
+          }
+        },
+        {
+          "name": "Remove Member from Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}/members/{{userId}}",
+            "description": "Only the project owner can remove members. Returns 204."
+          }
+        },
+        {
+          "name": "Create Project - Duplicate Key (Expect 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate Project\",\n  \"projectKey\": \"CAIRO\",\n  \"description\": \"This should fail with 409\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Only the project owner can delete. Returns 204. Run this LAST in the Projects folder."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sprints",
+      "description": "Sprint lifecycle: Create → Start → (Add Issues) → Complete",
+      "item": [
+        {
+          "name": "Create Sprint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('sprintId', json.id);",
+                  "  console.log('sprintId saved:', json.id);",
+                  "}",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status is PENDING', () => pm.expect(pm.response.json().status).to.eql('PENDING'));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/sprints",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint 1\",\n  \"startDate\": \"2025-05-01\",\n  \"endDate\": \"2025-05-14\"\n}"
+            },
+            "description": "Creates a sprint in PENDING status.\n\nExpected SprintResponse:\n{\n  \"id\": 1,\n  \"name\": \"Sprint 1\",\n  \"status\": \"PENDING\",\n  \"startDate\": \"2025-05-01\",\n  \"endDate\": \"2025-05-14\",\n  \"projectId\": 1\n}"
+          }
+        },
+        {
+          "name": "Get Sprints for Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}/sprints",
+            "description": "Returns all sprints for a project ordered by createdAt DESC."
+          }
+        },
+        {
+          "name": "Start Sprint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/sprints/{{sprintId}}/start",
+            "description": "Moves sprint from PENDING to ACTIVE. Fails if another sprint is already active."
+          }
+        },
+        {
+          "name": "Start Sprint - Already Active (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/sprints/{{sprintId}}/start",
+            "description": "Run after Start Sprint. Should return 400 because sprint is no longer PENDING."
+          }
+        },
+        {
+          "name": "Add Issue to Sprint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success message', () => pm.expect(pm.response.json().message).to.eql('Issue added to sprint'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/sprints/{{sprintId}}/issues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"issueId\": {{issueId}}\n}"
+            },
+            "description": "Assigns a backlog issue to this sprint. Fails if issue already in a sprint."
+          }
+        },
+        {
+          "name": "Get Board (Active Sprint Kanban)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}/board",
+            "description": "Returns issues grouped by status for the active sprint.\nKeys: TODO, IN_PROGRESS, IN_REVIEW, DONE\nEach value is a list of IssueResponse objects."
+          }
+        },
+        {
+          "name": "Get Board - No Active Sprint (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/99999/board",
+            "description": "Should return 400: no active sprint found for this project."
+          }
+        },
+        {
+          "name": "Complete Sprint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is COMPLETED', () => pm.expect(pm.response.json().status).to.eql('COMPLETED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/sprints/{{sprintId}}/complete",
+            "description": "Moves sprint from ACTIVE to COMPLETED. Unfinished issues are moved back to backlog (sprint = null)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Issues",
+      "description": "Full issue CRUD plus status updates. Controllers now return IssueResponse — no createdAt, no nested entity graphs.",
+      "item": [
+        {
+          "name": "Create Issue (Backlog)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('issueId', json.id);",
+                  "  console.log('issueId saved:', json.id);",
+                  "}",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));",
+                  "pm.test('No updatedAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('updatedAt'));",
+                  "pm.test('Reporter has no password', () => pm.expect(pm.response.json().reporter).to.not.have.property('password'));",
+                  "pm.test('Status defaults to TODO', () => pm.expect(pm.response.json().status).to.eql('TODO'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/issues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fix login page bug\",\n  \"description\": \"The login button does not respond on mobile.\",\n  \"type\": \"BUG\",\n  \"priority\": \"HIGH\",\n  \"storyPoints\": 3\n}"
+            },
+            "description": "Creates an issue with no sprint (goes to backlog).\ntype: BUG | STORY | TASK | EPIC\npriority: LOW | MEDIUM | HIGH | CRITICAL\n\nExpected IssueResponse:\n{\n  \"id\": 1,\n  \"title\": \"Fix login page bug\",\n  \"type\": \"BUG\",\n  \"priority\": \"HIGH\",\n  \"status\": \"TODO\",\n  \"storyPoints\": 3,\n  \"projectId\": 1,\n  \"sprintId\": null,\n  \"reporter\": { \"id\": 1, \"name\": \"Test User\", ... },\n  \"assignee\": null\n}"
+          }
+        },
+        {
+          "name": "Create Issue (In Sprint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/issues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implement dark mode\",\n  \"description\": \"Add a dark mode toggle to settings.\",\n  \"type\": \"STORY\",\n  \"priority\": \"MEDIUM\",\n  \"sprintId\": {{sprintId}},\n  \"storyPoints\": 5\n}"
+            },
+            "description": "Creates an issue pre-assigned to a sprint."
+          }
+        },
+        {
+          "name": "Create Issue - Validation Fail (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Has fields object', () => pm.expect(pm.response.json()).to.have.property('fields'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/issues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"type\": null,\n  \"priority\": null\n}"
+            },
+            "description": "title, type, and priority are all required. Should return 400 with field errors."
+          }
+        },
+        {
+          "name": "Get Issues for Project (All)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is paginated', () => pm.expect(pm.response.json()).to.have.property('content'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/issues?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "issues"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "type", "value": "BUG", "disabled": true },
+                { "key": "priority", "value": "HIGH", "disabled": true },
+                { "key": "status", "value": "TODO", "disabled": true },
+                { "key": "assigneeId", "value": "1", "disabled": true }
+              ]
+            },
+            "description": "Paginated issue list. Enable the query params to filter by type, priority, status, or assigneeId."
+          }
+        },
+        {
+          "name": "Get Issue by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/issues/{{issueId}}"
+          }
+        },
+        {
+          "name": "Get Issue - Not Found (Expect 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/issues/99999"
+          }
+        },
+        {
+          "name": "Update Issue (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Priority updated', () => pm.expect(pm.response.json().priority).to.eql('CRITICAL'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fix login page bug - updated title\",\n  \"priority\": \"CRITICAL\",\n  \"storyPoints\": 8\n}"
+            },
+            "description": "Partial update — only provided fields are changed. Null fields are ignored."
+          }
+        },
+        {
+          "name": "Update Status → IN_PROGRESS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status updated', () => pm.expect(pm.response.json().status).to.eql('IN_PROGRESS'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}"
+            },
+            "description": "Writes an IssueHistory audit record. Also notifies the assignee if one is set."
+          }
+        },
+        {
+          "name": "Update Status → IN_REVIEW",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_REVIEW\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Status → DONE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DONE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Issue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/issues/{{issueId}}",
+            "description": "Cascades to comments and history. Returns 204. Run this LAST in the Issues folder."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "description": "Comments on issues. Returns CommentResponse — no createdAt, author has no password.",
+      "item": [
+        {
+          "name": "Add Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('commentId', json.id);",
+                  "  console.log('commentId saved:', json.id);",
+                  "}",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No createdAt exposed', () => pm.expect(pm.response.json()).to.not.have.property('createdAt'));",
+                  "pm.test('Author has no password', () => pm.expect(pm.response.json().author).to.not.have.property('password'));",
+                  "pm.test('Has issueId', () => pm.expect(pm.response.json().issueId).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"This is a test comment on the issue.\"\n}"
+            },
+            "description": "Adds a comment. Also creates a notification for the assignee if different from the author.\n\nExpected CommentResponse:\n{\n  \"id\": 1,\n  \"body\": \"This is a test comment...\",\n  \"issueId\": 1,\n  \"author\": { \"id\": 1, \"name\": \"Test User\", \"email\": \"...\", \"role\": \"USER\" }\n}"
+          }
+        },
+        {
+          "name": "Add Comment - Empty Body (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/issues/{{issueId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Comments for Issue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/issues/{{issueId}}/comments",
+            "description": "Returns all comments ordered by createdAt ASC."
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/comments/{{commentId}}",
+            "description": "Only the comment author or ADMIN can delete. Returns 204."
+          }
+        },
+        {
+          "name": "Delete Comment - Not Found (Expect 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/comments/99999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification endpoints — new in this version. Returns NotificationResponse with no createdAt.",
+      "item": [
+        {
+          "name": "Get Unread Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "const items = pm.response.json();",
+                  "if (items.length > 0) {",
+                  "  pm.test('No createdAt exposed', () => pm.expect(items[0]).to.not.have.property('createdAt'));",
+                  "  pm.test('Has type field', () => pm.expect(items[0]).to.have.property('type'));",
+                  "  pm.test('Has isRead field', () => pm.expect(items[0]).to.have.property('isRead'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/notifications",
+            "description": "Returns all unread notifications for the logged-in user.\n\nExpected NotificationResponse:\n{\n  \"id\": 1,\n  \"type\": \"COMMENTED\",\n  \"message\": \"...\",\n  \"isRead\": false,\n  \"issueId\": 1,\n  \"userId\": 1\n}"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has unread field', () => pm.expect(pm.response.json()).to.have.property('unread'));",
+                  "pm.test('unread is a number', () => pm.expect(pm.response.json().unread).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/notifications/count",
+            "description": "Returns just the count for the notification bell badge.\n\nExpected: { \"unread\": 3 }"
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success message', () => pm.expect(pm.response.json().message).to.eql('All notifications marked as read'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/notifications/read-all",
+            "description": "Marks all unread notifications as read. Returns 200 with success message."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Security Checks",
+      "description": "Verify JWT protection is working correctly.",
+      "item": [
+        {
+          "name": "No Token - Get Projects (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/projects",
+            "description": "No Authorization header. Should return 403 Forbidden."
+          }
+        },
+        {
+          "name": "Invalid Token (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer thisisnotavalidtoken" }],
+            "url": "{{baseUrl}}/projects",
+            "description": "Malformed JWT. Should return 403 Forbidden."
+          }
+        },
+        {
+          "name": "Auth Endpoint is Public (Expect NOT 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Auth endpoint is accessible', () => {",
+                  "  pm.expect(pm.response.code).to.not.eql(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doesnotmatter@test.com\",\n  \"password\": \"doesnotmatter\"\n}"
+            },
+            "description": "Login endpoint should never return 403 — it's public. Bad credentials return 401, not a security block."
+          }
+        }
+      ]
+    }
+  ]
+}
